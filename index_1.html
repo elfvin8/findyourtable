@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find Your Table</title>
+<style>
+:root{--bg:#faf8f5;--card:#fff;--ink:#1d1b19;--mute:#7a746c;--line:#e6e1da;--acc:#8a2b3d;--ok:#2d7a4f;--bad:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#171513;--card:#211e1b;--ink:#f1ede7;--mute:#a39b90;--line:#38332e;--acc:#e08a9a;--ok:#6cc596;--bad:#ff8a80}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Georgia,"Times New Roman",serif;line-height:1.4}
+main{max-width:640px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:28px;margin:8px 0 4px;text-align:center}
+.sub{color:var(--mute);text-align:center;margin:0 0 20px;font-family:system-ui,sans-serif;font-size:14px}
+input,button{font:inherit;font-family:system-ui,sans-serif}
+input[type=text],input[type=search],input[type=email],input[type=password]{width:100%;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-size:17px}
+button{border:0;border-radius:10px;padding:10px 14px;background:var(--acc);color:#fff;font-size:15px;cursor:pointer}
+button:disabled{opacity:.5}
+button.ghost{background:transparent;color:var(--acc);border:1px solid var(--line)}
+.tabs{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.tabs button{background:transparent;color:var(--mute);border:1px solid var(--line)}
+.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:10px 0;display:flex;align-items:center;gap:12px}
+.card .nm{flex:1;font-size:18px}
+.tbl{text-align:center;min-width:64px}
+.tbl b{display:block;font-size:30px;color:var(--acc);line-height:1}
+.tbl span{font:12px system-ui,sans-serif;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+.hint,.msg{color:var(--mute);font:14px system-ui,sans-serif;text-align:center;margin:14px 0}
+.stats{display:flex;gap:8px;margin:12px 0;font-family:system-ui,sans-serif}
+.stats div{flex:1;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;font-size:12px;color:var(--mute)}
+.stats b{display:block;font-size:20px;color:var(--ink)}
+.row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;font-family:system-ui,sans-serif}
+.row .top{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}
+.row .top b{font-size:16px}
+.row .ctl{display:flex;gap:8px;align-items:center}
+.row .ctl input{width:110px;padding:8px;font-size:15px}
+.att{background:transparent;color:var(--mute);border:1px solid var(--line);flex:1}
+.att.in{background:var(--ok);color:#fff;border-color:var(--ok)}
+.rm{background:transparent;color:var(--bad);border:1px solid var(--line);padding:8px 10px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0;font-family:system-ui,sans-serif;font-size:14px}
+.box code{background:var(--bg);padding:2px 6px;border-radius:4px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.col{flex-direction:column}
+.err{color:var(--bad);border-color:var(--bad)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <h1>Find Your Table</h1>
+  <p class="sub">Type your name to see where you are seated</p>
+  <div id="cfgErr" class="box err" hidden>Firebase is not configured yet. Paste your Firebase settings into the <code>FIREBASE_CONFIG</code> block at the top of the script in this file.</div>
+  <div class="tabs">
+    <button id="tGuest" class="on">Guest lookup</button>
+    <button id="tStaff">Staff panel</button>
+  </div>
+
+  <section id="guest">
+    <input type="search" id="q" placeholder="Start typing your name" autocomplete="off">
+    <div id="gres"></div>
+  </section>
+
+  <section id="staff" hidden>
+    <div id="login" class="box">
+      <b>Staff sign in</b>
+      <div class="bar col">
+        <input type="email" id="lEmail" placeholder="Email" autocomplete="username">
+        <input type="password" id="lPass" placeholder="Password" autocomplete="current-password">
+        <button id="lBtn">Sign in</button>
+      </div>
+      <div id="lMsg" class="msg" style="text-align:left;margin:6px 0"></div>
+    </div>
+
+    <div id="panel" hidden>
+      <div id="err" class="box err" hidden></div>
+      <div class="stats">
+        <div><b id="sTot">0</b>Guests</div>
+        <div><b id="sAtt">0</b>Attended</div>
+        <div><b id="sLd">0</b>With draw no.</div>
+      </div>
+
+      <div class="box">
+        <b>Upload guest list (CSV)</b><br>
+        Columns: <code>name</code>, <code>table</code>, optional <code>lucky_draw</code>, <code>attended</code> (yes or no).
+        <div class="bar"><input type="file" id="file" accept=".csv,text/csv"></div>
+        <label style="display:block;margin:6px 0"><input type="checkbox" id="replace"> Replace the existing list first</label>
+        <div id="upMsg" class="msg" style="text-align:left;margin:6px 0"></div>
+      </div>
+
+      <div class="box">
+        <b>Add one guest</b>
+        <div class="bar col">
+          <input type="text" id="aName" placeholder="Name" autocomplete="off">
+          <input type="text" id="aTable" placeholder="Table number" autocomplete="off">
+          <input type="text" id="aLd" inputmode="numeric" placeholder="Lucky draw number (optional)" autocomplete="off">
+          <label><input type="checkbox" id="aAtt"> Already attended</label>
+          <button id="aBtn">Add guest</button>
+        </div>
+        <div id="aMsg" class="msg" style="text-align:left;margin:6px 0"></div>
+      </div>
+
+      <input type="search" id="sq" placeholder="Search guests or table">
+      <div class="bar">
+        <button class="ghost" id="exp">Export CSV</button>
+        <button class="ghost" id="clr">Delete all guests</button>
+        <button class="ghost" id="out">Sign out</button>
+      </div>
+      <div id="slist"></div>
+    </div>
+  </section>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+// STEP 1: paste your Firebase web app settings here (Firebase console, Project settings, Your apps).
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDhH6mrH9b4ILLCS5aZguzZrzP7FuMj8YU",
+  authDomain: "findyourtable-37235.firebaseapp.com",
+  projectId: "findyourtable-37235",
+  storageBucket: "findyourtable-37235.firebasestorage.app",
+  messagingSenderId: "301956202015",
+  appId: "1:301956202015:web:aa7af6b7e9bde52cd75f2a"
+};
+
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  function norm(s){return String(s==null?"":s).toLowerCase().replace(/\s+/g," ").trim()}
+  function esc(s){var d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML}
+  function msgOf(e){return (e&&(e.code||e.message))?(e.code||"")+(e.message?" "+e.message:""):"unknown error"}
+  function showErr(w,e){var x=$("err");x.hidden=false;x.textContent=w+": "+msgOf(e)}
+  function clearErr(){$("err").hidden=true}
+  function keysFor(name){var s={};norm(name).split(" ").forEach(function(w){for(var i=2;i<=Math.min(w.length,20);i++)s[w.slice(0,i)]=1});return Object.keys(s)}
+
+  $("tGuest").onclick=function(){$("guest").hidden=false;$("staff").hidden=true;$("tGuest").className="on";$("tStaff").className=""};
+  $("tStaff").onclick=function(){$("guest").hidden=true;$("staff").hidden=false;$("tStaff").className="on";$("tGuest").className=""};
+
+  if(!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey.indexOf("PASTE")===0){$("cfgErr").hidden=false;$("lBtn").disabled=true;return}
+  firebase.initializeApp(FIREBASE_CONFIG);
+  var auth=firebase.auth(), db=firebase.firestore(), col=db.collection("guests");
+
+  /* ---------- Guest lookup (reads only matching docs) ---------- */
+  var seq=0, timer=null;
+  function renderResults(list){
+    var out=$("gres");
+    if(!list.length){out.innerHTML='<p class="hint">No match found. Please check the spelling or ask the registration desk.</p>';return}
+    out.innerHTML=list.map(function(g){
+      return '<div class="card"><div class="nm">'+esc(g.name)+'</div><div class="tbl"><b>'+esc(g.table)+'</b><span>Table</span></div></div>';
+    }).join("");
+  }
+  function search(){
+    var q=norm($("q").value), out=$("gres");
+    if(q.length<2){out.innerHTML='<p class="hint">Enter at least 2 letters</p>';return}
+    var words=q.split(" ").filter(function(w){return w.length>=2});
+    if(!words.length){out.innerHTML='<p class="hint">Enter at least 2 letters</p>';return}
+    var key=words.slice().sort(function(a,b){return b.length-a.length})[0].slice(0,20);
+    var my=++seq;
+    col.where("keys","array-contains",key).limit(30).get().then(function(snap){
+      if(my!==seq)return;
+      var list=snap.docs.map(function(d){return d.data()}).filter(function(g){
+        var n=norm(g.name);return words.every(function(w){return n.split(" ").some(function(p){return p.indexOf(w)===0})});
+      }).sort(function(a,b){return norm(a.name)<norm(b.name)?-1:1});
+      renderResults(list);
+    }).catch(function(e){if(my===seq)out.innerHTML='<p class="hint">Could not search right now. Please ask the registration desk.</p>'});
+  }
+  $("q").addEventListener("input",function(){clearTimeout(timer);timer=setTimeout(search,250)});
+  search();
+
+  /* ---------- Staff ---------- */
+  var guests=[], unsub=null;
+  function sorted(){return guests.slice().sort(function(a,b){return norm(a.name)<norm(b.name)?-1:1})}
+  function renderStaff(){
+    var q=norm($("sq").value);
+    var list=sorted().filter(function(g){return !q||norm(g.name).indexOf(q)>-1||norm(g.table)===q});
+    $("sTot").textContent=guests.length;
+    $("sAtt").textContent=guests.filter(function(g){return g.attended}).length;
+    $("sLd").textContent=guests.filter(function(g){return g.lucky_draw!==""&&g.lucky_draw!=null}).length;
+    var active=document.activeElement;
+    if(active&&active.getAttribute&&active.getAttribute("data-a")==="ld")return; /* do not wipe a field being typed in */
+    $("slist").innerHTML=list.slice(0,100).map(function(g){
+      return '<div class="row" data-id="'+esc(g.id)+'"><div class="top"><b>'+esc(g.name)+'</b><span>Table '+esc(g.table)+'</span></div>'+
+        '<div class="ctl"><button class="att'+(g.attended?' in':'')+'" data-a="att">'+(g.attended?'Attended':'Mark attended')+'</button>'+
+        '<input type="text" inputmode="numeric" placeholder="Draw no." value="'+esc(g.lucky_draw)+'" data-a="ld">'+
+        '<button class="rm" data-a="rm">Remove</button></div></div>';
+    }).join("")+(list.length>100?'<p class="hint">Showing 100 of '+list.length+'. Search to narrow down.</p>':"");
+  }
+  $("sq").addEventListener("input",renderStaff);
+
+  function startListening(){
+    if(unsub)return;
+    unsub=col.onSnapshot(function(snap){
+      guests=snap.docs.map(function(d){var x=d.data();x.id=d.id;return x});
+      renderStaff();
+    },function(e){showErr("Could not load guests",e)});
+  }
+  function stopListening(){if(unsub){unsub();unsub=null}guests=[];}
+
+  auth.onAuthStateChanged(function(u){
+    $("login").hidden=!!u; $("panel").hidden=!u;
+    if(u)startListening(); else stopListening();
+  });
+  $("lBtn").onclick=function(){
+    $("lMsg").textContent="Signing in...";
+    auth.signInWithEmailAndPassword($("lEmail").value.trim(),$("lPass").value).then(function(){$("lMsg").textContent="";$("lPass").value=""})
+      .catch(function(e){$("lMsg").textContent="Sign in failed: "+msgOf(e)});
+  };
+  $("lPass").addEventListener("keydown",function(e){if(e.key==="Enter")$("lBtn").click()});
+  $("out").onclick=function(){auth.signOut()};
+
+  $("slist").addEventListener("click",function(e){
+    var b=e.target.closest("[data-a]"); if(!b)return;
+    var id=b.closest(".row").getAttribute("data-id");
+    var g=guests.filter(function(x){return x.id===id})[0]; if(!g)return;
+    clearErr();
+    if(b.getAttribute("data-a")==="att"){
+      col.doc(id).update({attended:!g.attended}).catch(function(err){showErr("Could not save attendance",err)});
+    }else if(b.getAttribute("data-a")==="rm"){
+      if(confirm("Remove "+g.name+"?"))col.doc(id).delete().catch(function(err){showErr("Could not remove",err)});
+    }
+  });
+  $("slist").addEventListener("change",function(e){
+    if(e.target.getAttribute("data-a")!=="ld")return;
+    var id=e.target.closest(".row").getAttribute("data-id");
+    col.doc(id).update({lucky_draw:e.target.value.trim()}).then(renderStaff).catch(function(err){showErr("Could not save draw number",err)});
+  });
+
+  $("aBtn").onclick=function(){
+    var nm=$("aName").value.trim(), tb=$("aTable").value.trim(), m=$("aMsg");
+    if(!nm||!tb){m.textContent="Name and table number are required.";return}
+    clearErr();
+    col.add({name:nm,table:tb,lucky_draw:$("aLd").value.trim(),attended:$("aAtt").checked,keys:keysFor(nm)}).then(function(){
+      m.textContent="Added "+nm+" to table "+tb+".";
+      $("aName").value="";$("aTable").value="";$("aLd").value="";$("aAtt").checked=false;$("aName").focus();
+    }).catch(function(e){showErr("Could not add guest",e)});
+  };
+
+  function parseCSV(t){
+    var rows=[],row=[],f="",q=false,i,c;
+    t=t.replace(/^\uFEFF/,"");
+    for(i=0;i<t.length;i++){
+      c=t[i];
+      if(q){ if(c=='"'){ if(t[i+1]=='"'){f+='"';i++} else q=false } else f+=c }
+      else if(c=='"')q=true;
+      else if(c==","){row.push(f);f=""}
+      else if(c=="\n"||c=="\r"){ if(c=="\r"&&t[i+1]=="\n")i++; row.push(f);f=""; if(row.some(function(x){return x.trim()!==""}))rows.push(row); row=[] }
+      else f+=c;
+    }
+    row.push(f); if(row.some(function(x){return x.trim()!==""}))rows.push(row);
+    return rows;
+  }
+  async function commit(ops){ /* ops: array of function(batch); 400 per batch */
+    for(var i=0;i<ops.length;i+=400){
+      var b=db.batch(); ops.slice(i,i+400).forEach(function(f){f(b)}); await b.commit();
+    }
+  }
+  $("file").onchange=async function(e){
+    var file=e.target.files[0]; if(!file)return;
+    var msg=$("upMsg"); clearErr();
+    try{
+      var rows=parseCSV(await file.text());
+      if(rows.length<2){msg.textContent="The file has no data rows.";return}
+      var h=rows[0].map(function(x){return norm(x).replace(/[ \-]/g,"_")});
+      var idx=function(names){for(var k=0;k<names.length;k++){var p=h.indexOf(names[k]);if(p>-1)return p}return -1};
+      var iN=idx(["name"]), iT=idx(["table","table_number","table_no"]);
+      var iL=idx(["lucky_draw","lucky_draw_number","lucky_draw_no"]), iA=idx(["attended","attendance"]);
+      if(iN<0||iT<0){msg.textContent="Header row needs at least: name, table.";return}
+      var ops=[];
+      if($("replace").checked){guests.forEach(function(g){ops.push(function(b){b.delete(col.doc(g.id))})})}
+      var n=0;
+      for(var r=1;r<rows.length;r++){
+        var x=rows[r], nm=(x[iN]||"").trim(); if(!nm)continue;
+        (function(nm,x){
+          var data={name:nm,table:(x[iT]||"").trim(),lucky_draw:iL>-1?(x[iL]||"").trim():"",
+            attended:iA>-1?/^(y|yes|true|1|attended|present)$/i.test((x[iA]||"").trim()):false,keys:keysFor(nm)};
+          ops.push(function(b){b.set(col.doc(),data)});
+        })(nm,x); n++;
+      }
+      msg.textContent="Uploading "+n+" guests...";
+      await commit(ops);
+      msg.textContent="Done. "+n+" guests added."; $("file").value="";
+    }catch(err){msg.textContent="Upload failed: "+msgOf(err)}
+  };
+
+  $("exp").onclick=function(){
+    var q=function(v){v=String(v==null?"":v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+    var out="name,table,lucky_draw,attended\n"+sorted().map(function(g){return [g.name,g.table,g.lucky_draw,g.attended?"yes":"no"].map(q).join(",")}).join("\n");
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob(["\uFEFF"+out],{type:"text/csv;charset=utf-8"}));a.download="guest-list.csv";
+    document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);
+  };
+
+  var armed=false, armT=null;
+  $("clr").onclick=async function(){
+    if(!guests.length)return;
+    var btn=$("clr");
+    if(!armed){armed=true;btn.textContent="Tap again to delete all "+guests.length;armT=setTimeout(function(){armed=false;btn.textContent="Delete all guests"},5000);return}
+    clearTimeout(armT);armed=false;btn.textContent="Deleting...";clearErr();
+    try{await commit(guests.map(function(g){return function(b){b.delete(col.doc(g.id))}}))}
+    catch(err){showErr("Could not delete",err)}
+    btn.textContent="Delete all guests";
+  };
+})();
+</script>
+</body>
+</html>
