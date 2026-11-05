@@ -43,15 +43,18 @@ button.ghost{background:transparent;color:var(--acc);border:1px solid var(--line
 .bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .col{flex-direction:column}
 .err{color:var(--bad);border-color:var(--bad)}
+.banner{width:100%;background:var(--card);border-bottom:1px solid var(--line);box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.banner img{display:block;width:100%;max-width:1920px;margin:0 auto;height:auto;aspect-ratio:16/1;min-height:72px;object-fit:cover;object-position:center}
 [hidden]{display:none!important}
 </style>
 </head>
 <body>
+<header class="banner"><img src="banner-image.png" alt="Event banner" decoding="async" onerror="this.parentNode.hidden=true"></header>
 <main>
   <h1>Find Your Table</h1>
   <p class="sub">Type your name to see where you are seated</p>
   <div id="cfgErr" class="box err" hidden>Firebase is not configured yet. Paste your Firebase settings into the <code>FIREBASE_CONFIG</code> block at the top of the script in this file.</div>
-  <div class="tabs">
+  <div class="tabs" hidden>
     <button id="tGuest" class="on">Guest lookup</button>
     <button id="tStaff">Staff panel</button>
   </div>
