@@ -103,7 +103,7 @@ button.ghost{background:transparent;color:var(--acc);border:1px solid var(--line
       <input type="search" id="sq" placeholder="Search guests or table">
       <div class="bar">
         <button class="ghost" id="exp">Export CSV</button>
-        <button class="ghost" id="clr">Delete all guests</button>
+        <button class="ghost" id="clr" hidden>Delete all guests</button>
         <button class="ghost" id="out">Sign out</button>
       </div>
       <div id="slist"></div>
@@ -117,12 +117,12 @@ button.ghost{background:transparent;color:var(--acc);border:1px solid var(--line
 <script>
 // STEP 1: paste your Firebase web app settings here (Firebase console, Project settings, Your apps).
 var FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDhH6mrH9b4ILLCS5aZguzZrzP7FuMj8YU",
-  authDomain: "findyourtable-37235.firebaseapp.com",
-  projectId: "findyourtable-37235",
-  storageBucket: "findyourtable-37235.firebasestorage.app",
-  messagingSenderId: "301956202015",
-  appId: "1:301956202015:web:aa7af6b7e9bde52cd75f2a"
+    apiKey: "AIzaSyDhH6mrH9b4ILLCS5aZguzZrzP7FuMj8YU",
+    authDomain: "findyourtable-37235.firebaseapp.com",
+    projectId: "findyourtable-37235",
+    storageBucket: "findyourtable-37235.firebasestorage.app",
+    messagingSenderId: "301956202015",
+    appId: "1:301956202015:web:aa7af6b7e9bde52cd75f2a"
 };
 
 (function(){
@@ -183,7 +183,7 @@ var FIREBASE_CONFIG = {
       return '<div class="row" data-id="'+esc(g.id)+'"><div class="top"><b>'+esc(g.name)+'</b><span>Table '+esc(g.table)+'</span></div>'+
         '<div class="ctl"><button class="att'+(g.attended?' in':'')+'" data-a="att">'+(g.attended?'Attended':'Mark attended')+'</button>'+
         '<input type="text" inputmode="numeric" placeholder="Draw no." value="'+esc(g.lucky_draw)+'" data-a="ld">'+
-        '<button class="rm" data-a="rm">Remove</button></div></div>';
+        '</div></div>';
     }).join("")+(list.length>100?'<p class="hint">Showing 100 of '+list.length+'. Search to narrow down.</p>':"");
   }
   $("sq").addEventListener("input",renderStaff);
