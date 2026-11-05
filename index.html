@@ -117,12 +117,12 @@ button.ghost{background:transparent;color:var(--acc);border:1px solid var(--line
 <script>
 // STEP 1: paste your Firebase web app settings here (Firebase console, Project settings, Your apps).
 var FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDhH6mrH9b4ILLCS5aZguzZrzP7FuMj8YU",
-    authDomain: "findyourtable-37235.firebaseapp.com",
-    projectId: "findyourtable-37235",
-    storageBucket: "findyourtable-37235.firebasestorage.app",
-    messagingSenderId: "301956202015",
-    appId: "1:301956202015:web:aa7af6b7e9bde52cd75f2a"
+  apiKey: "AIzaSyDhH6mrH9b4ILLCS5aZguzZrzP7FuMj8YU",
+  authDomain: "findyourtable-37235.firebaseapp.com",
+  projectId: "findyourtable-37235",
+  storageBucket: "findyourtable-37235.firebasestorage.app",
+  messagingSenderId: "301956202015",
+  appId: "1:301956202015:web:aa7af6b7e9bde52cd75f2a"
 };
 
 (function(){
@@ -134,8 +134,12 @@ var FIREBASE_CONFIG = {
   function clearErr(){$("err").hidden=true}
   function keysFor(name){var s={};norm(name).split(" ").forEach(function(w){for(var i=2;i<=Math.min(w.length,20);i++)s[w.slice(0,i)]=1});return Object.keys(s)}
 
-  $("tGuest").onclick=function(){$("guest").hidden=false;$("staff").hidden=true;$("tGuest").className="on";$("tStaff").className=""};
-  $("tStaff").onclick=function(){$("guest").hidden=true;$("staff").hidden=false;$("tStaff").className="on";$("tGuest").className=""};
+  function showTab(staff){$("guest").hidden=staff;$("staff").hidden=!staff;$("tStaff").className=staff?"on":"";$("tGuest").className=staff?"":"on"}
+  function fromHash(){showTab(location.hash.toLowerCase()==="#staff")}
+  $("tGuest").onclick=function(){history.replaceState(null,"",location.pathname+location.search);showTab(false)};
+  $("tStaff").onclick=function(){history.replaceState(null,"",location.pathname+location.search+"#staff");showTab(true)};
+  window.addEventListener("hashchange",fromHash);
+  fromHash();
 
   if(!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey.indexOf("PASTE")===0){$("cfgErr").hidden=false;$("lBtn").disabled=true;return}
   firebase.initializeApp(FIREBASE_CONFIG);
